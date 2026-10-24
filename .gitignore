@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+build/
+dist/
+*.spec
+*.wav
+*.log
+.wheels/
+setup/
+*.reg
+*.spr
+packaged-check*.json
+packaged-preview*.png
+preview.png
+start-configured.ps1

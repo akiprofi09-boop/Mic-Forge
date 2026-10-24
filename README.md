@@ -67,4 +67,3 @@ Get-Content packaged-check.json
 Tests use temporary preferences and synthetic samples; they do not capture or play live audio. Logs are local under `%LOCALAPPDATA%/MicForge`. Only an explicit Save WAVs action exports test audio.
 
 See [third-party notices](THIRD_PARTY.md). VB-CABLE is distributed separately by its vendor.
-

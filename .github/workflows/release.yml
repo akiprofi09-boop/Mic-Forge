@@ -1,0 +1,64 @@
+name: Windows release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: windows-release
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+          architecture: x64
+      - name: Install verified dependencies
+        run: |
+          python -m venv .venv
+          ./.venv/Scripts/python.exe bootstrap.py
+          if ($LASTEXITCODE -ne 0) { throw 'Dependency installation failed' }
+      - name: Test audio and UI
+        run: |
+          ./.venv/Scripts/python.exe -m unittest test_audio test_ui -q
+          if ($LASTEXITCODE -ne 0) { throw 'Regression tests failed' }
+          ./.venv/Scripts/python.exe benchmarks/compare_dsp.py --reference benchmarks/reference_dsp_v0_1_4.py --output dsp-equivalence.json
+          if ($LASTEXITCODE -ne 0) { throw 'Signal comparison failed' }
+      - name: Package and check executable
+        run: |
+          ./build.ps1
+          $checkPath = Join-Path $PWD 'packaged-check.json'
+          $process = Start-Process './dist/Mic Forge/Mic Forge.exe' -ArgumentList @('--self-test', ('"' + $checkPath + '"')) -PassThru
+          if (-not $process.WaitForExit(60000)) { $process.Kill(); throw 'Packaged check timed out' }
+          if ($process.ExitCode -ne 0 -or -not (Test-Path -LiteralPath $checkPath)) { throw 'Packaged check failed' }
+          $check = Get-Content -LiteralPath $checkPath -Raw | ConvertFrom-Json
+          if (-not $check.passed) { throw 'Packaged signal check failed' }
+      - name: Publish versioned Windows ZIP
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          $version = (& ./.venv/Scripts/python.exe -c "import ast; m=ast.parse(open('main.py', encoding='utf-8').read()); print(next(ast.literal_eval(n.value) for n in m.body if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id=='VERSION' for t in n.targets)))").Trim()
+          $tag = 'v' + $version
+          $zip = 'Mic-Forge-' + $tag + '-Windows-x64.zip'
+          Compress-Archive -LiteralPath 'dist/Mic Forge' -DestinationPath $zip
+          $hash = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  $zip" | Set-Content -LiteralPath SHA256SUMS.txt -Encoding ascii
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -eq 0) { throw "Release $tag already exists; increment VERSION before publishing" }
+          gh release create $tag $zip SHA256SUMS.txt --target '${{ github.sha }}' --title "Mic Forge $tag" --notes-file RELEASE_NOTES.md
+          if ($LASTEXITCODE -ne 0) { throw 'Release publication failed' }

@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "frames": 600,
+  "samples": 288000,
+  "setting_transitions": 5,
+  "bit_identical": true,
+  "max_sample_error": 0.0,
+  "rms_sample_error": 0.0,
+  "reference_sha256": "a430b77a0be7eb61c0acbc47ef4d6fff5aca0c1c240b07ecfcbe7d3f9307f8ec",
+  "candidate_sha256": "4646157398936325e5b5faed7df794250797fa5788e3eaaa92a1f36db07c5724",
+  "opened_audio_streams": false
+}

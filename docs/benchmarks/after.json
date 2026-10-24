@@ -1,0 +1,17 @@
+{
+  "label": "0.2.0",
+  "mode": "tray",
+  "seconds": 8.000369800000044,
+  "cpu_one_core_pct": 11.913511797917076,
+  "cpu_machine_pct": 0.992792649826423,
+  "dsp_p50_ms": 1.0462000009283656,
+  "dsp_p95_ms": 1.4955050017306346,
+  "processed_frames": 800,
+  "capture_queue_drops": 0,
+  "memory": {
+    "working_set_mib": 177.1875,
+    "private_commit_mib": 118.2421875
+  },
+  "opened_audio_streams": false,
+  "logical_processors": 12
+}
